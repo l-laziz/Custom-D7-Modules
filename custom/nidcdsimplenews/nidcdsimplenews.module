@@ -1,0 +1,117 @@
+<?php
+/**
+ * Invoked if a user is subscribed to a newsletter.
+ *
+ * @param $subscriber
+ *   The subscriber object including all subscriptions of this user.
+ *
+ * @param $subscription
+ *   The subscription object for this specific subscribe action.
+ *
+ * @ingroup subscriber
+ */
+
+// implementing init() function
+function nidcdsimplenews_init()
+{
+	//dpm('My custom init function');
+}
+
+/******
+11/20/2015 - Custom Method added by AV
+*****/
+
+//form_id = simplenews_subscriptions_multi_block_form
+/**
+ * Implements hook_form_alter().
+ */
+ function nidcdsimplenews_form_alter(&$form, &$form_state, $form_id) {
+ if ($form_id == 'simplenews_subscriptions_multi_block_form') {
+    $form['#submit'][] = 'nidcdsimplenews_subscription_form_submit';
+  }
+}
+
+function nidcdsimplenews_subscription_form_submit($form, &$form_state)
+{
+	//dpm('nidcdsimplenews_subscription_form_submit() called.');
+	//dpm($form_state['values'], 'Here is the form state');
+
+	$mail = $form_state['values']['mail'];
+  $account = simplenews_load_user_by_mail($mail);
+
+  // Group confirmation mails as necessary and configured.
+  simplenews_confirmation_combine(TRUE);
+
+  switch ($form_state['values']['op']) {
+    case t('Update'):
+      /* AV- Commented to handle the chnages at the end 
+      // We first subscribe, then unsubscribe. This prevents deletion of subscriptions
+      // when unsubscribed from the
+      arsort($form_state['values']['newsletters'], SORT_NUMERIC);
+      foreach ($form_state['values']['newsletters'] as $tid => $checked) {
+        $confirm = simplenews_require_double_opt_in($tid, $account);
+        if ($checked) {
+          simplenews_subscribe_user($mail, $tid, $confirm, 'website');
+        }
+        else {
+          simplenews_unsubscribe_user($mail, $tid, $confirm, 'website');
+        }
+      }
+      if (simplenews_confirmation_send_combined()) {
+        drupal_set_message(t('You will receive a confirmation e-mail shortly containing further instructions on how to complete your subscription.'));
+      }
+      else {
+        drupal_set_message(t('The newsletter subscriptions for %mail have been updated.', array('%mail' => $form_state['values']['mail'])));
+      }
+      */
+      break;
+    case t('Subscribe'):
+      foreach ($form_state['values']['newsletters'] as $tid => $checked) {
+        if ($checked) {
+          simplenews_subscribe_user($mail, $tid, FALSE, 'website');
+        }
+
+      }
+      drupal_get_messages();
+      drupal_set_message(t('Confirmation: The newsletter subscriptions for %mail have been updated. You will receive a confirmation e-mail shortly on your subscription.', array('%mail' => $form_state['values']['mail'])));
+      //AV- Obsolete logic for the custom method
+      /*
+      if (simplenews_confirmation_send_combined()) {
+        drupal_set_message(t('You will receive a confirmation e-mail shortly containing further instructions on how to complete your subscription.'));
+      }
+      else {
+        drupal_set_message(t('The newsletter subscriptions for %mail have been updated.', array('%mail' => $form_state['values']['mail'])));
+      }
+      */
+      break;
+    case t('Unsubscribe'):
+      foreach ($form_state['values']['newsletters'] as $tid => $checked) {
+        if ($checked) {
+          simplenews_unsubscribe_user($mail, $tid, FALSE, 'website');
+        }
+
+      }
+      drupal_get_messages();
+      drupal_set_message(t('Confirmation: The newsletter subscriptions for %mail have been updated. You will receive a confirmation e-mail shortly on your unsubscription.', array('%mail' => $form_state['values']['mail'])));
+      /* AV: Custom Logic not yet determined . COMMENTED for now. */
+      /*
+      foreach ($form_state['values']['newsletters'] as $tid => $checked) {
+        if ($checked) {
+          $confirm = simplenews_require_double_opt_in($tid, $account);
+          simplenews_unsubscribe_user($mail, $tid, $confirm, 'website');
+        }
+      }
+      if (simplenews_confirmation_send_combined()) {
+        drupal_set_message(t('You will receive a confirmation e-mail shortly containing further instructions on how to cancel your subscription.'));
+      }
+      else {
+        drupal_set_message(t('The newsletter subscriptions for %mail have been updated.', array('%mail' => $form_state['values']['mail'])));
+      }*/
+      break;
+  }
+}
+
+
+
+
+

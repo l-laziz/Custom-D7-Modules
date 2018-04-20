@@ -1,0 +1,8 @@
+name = NIDCD Basic Cart
+description = Custom module for Basic Cart
+package = Custom
+core = 7.x
+version = "7.x-1.0"
+core = "7.x"
+
+dependencies = basic_cart
